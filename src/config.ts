@@ -31,11 +31,13 @@ export function getConfig() {
     clientSecret: required("FREEAGENT_CLIENT_SECRET"),
     redirectUri:
       process.env.FREEAGENT_REDIRECT_URI?.trim() ||
-      "http://localhost:3000/oauth/callback",
+      "http://127.0.0.1:3847/oauth/callback",
     tokenPath: resolve(
       process.env.FREEAGENT_TOKEN_PATH?.trim() || ".oauth-tokens.json",
     ),
-    port: Number(process.env.PORT || 3000),
+    port: Number(process.env.PORT || 3847),
+    /** Bind address for the HTTP server. Use 0.0.0.0 inside Docker. */
+    bindHost: process.env.BIND_HOST?.trim() || "127.0.0.1",
     userAgent: "freeagent-agent/0.1.0",
   };
 }

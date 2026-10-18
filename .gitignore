@@ -6,5 +6,9 @@ dist/
 .DS_Store
 *.log
 .oauth-tokens.json
+data/*
+!data/.gitkeep
+receipts/*
+!receipts/.gitkeep
 coverage/
 .turbo/

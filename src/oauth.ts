@@ -16,7 +16,7 @@ export function buildAuthorizeUrl(state = "freeagent-agent"): string {
   return url.toString();
 }
 
-async function exchangeCode(code: string): Promise<TokenSet> {
+export async function exchangeCode(code: string): Promise<TokenSet> {
   const { apiBase, clientId, clientSecret, redirectUri, userAgent } = getConfig();
   const body = new URLSearchParams({
     grant_type: "authorization_code",
@@ -99,7 +99,7 @@ export async function getValidAccessToken(): Promise<string> {
 
 /** Opens a one-shot localhost callback server and walks the OAuth code flow. */
 export async function runInteractiveAuth(): Promise<TokenSet> {
-  const { port, redirectUri } = getConfig();
+  const { port, redirectUri, bindHost } = getConfig();
   const expected = new URL(redirectUri);
   if (expected.hostname !== "localhost" && expected.hostname !== "127.0.0.1") {
     throw new Error(
@@ -111,11 +111,13 @@ export async function runInteractiveAuth(): Promise<TokenSet> {
   console.log("\nOpen this URL in your browser and approve the app:\n");
   console.log(authorizeUrl);
   console.log(`\nWaiting for callback on ${redirectUri} …\n`);
+  console.log("(Or with Docker already up, open http://127.0.0.1:3847/auth)\n");
 
   return new Promise((resolve, reject) => {
+    const listenHost = bindHost === "0.0.0.0" ? "127.0.0.1" : bindHost;
     const server = createServer(async (req, res) => {
       try {
-        const reqUrl = new URL(req.url ?? "/", `http://localhost:${port}`);
+        const reqUrl = new URL(req.url ?? "/", `http://${listenHost}:${port}`);
         if (reqUrl.pathname !== expected.pathname) {
           res.writeHead(404).end("Not found");
           return;
@@ -148,6 +150,6 @@ export async function runInteractiveAuth(): Promise<TokenSet> {
       }
     });
 
-    server.listen(port, "127.0.0.1");
+    server.listen(port, listenHost);
   });
 }

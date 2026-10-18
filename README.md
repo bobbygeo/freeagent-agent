@@ -11,66 +11,54 @@ FreeAgent bank feeds stay connected inside FreeAgent (Open Banking). This projec
 
 ## FreeAgent developer app form
 
-When creating the app at [dev.freeagent.com](https://dev.freeagent.com/apps):
-
 | Field | Suggested value |
 |---|---|
 | **Name** | `freeagent-agent` |
 | **Description** | Personal agent for bank reconciliation via the FreeAgent API |
 | **App Homepage URL** | `https://github.com/bobbygeo/freeagent-agent` |
-| **OAuth Redirect URIs** | `http://localhost:3000/oauth/callback` |
-| **Enable Accountancy Practice API** | **Off** (unless you are an accountant managing clients) |
+| **OAuth Redirect URIs** | `http://127.0.0.1:3847/oauth/callback` |
+| **Enable Accountancy Practice API** | **Off** |
 
-After create, copy the **OAuth identifier** and **OAuth secret** into `.env`.
+Add that redirect URI in FreeAgent (you can keep any old `:3000` URI as well). Copy Client ID / Secret into `.env`.
 
-Use the **sandbox** dashboard + `FREEAGENT_ENV=sandbox` while testing.
+## Docker (recommended local host)
 
-## Setup
+Runs on **127.0.0.1:3847** so it does not collide with apps on port 3000.
 
 ```bash
 cd /Users/bobbyg/Projects/DEV/freeagent-agent
-cp .env.example .env
-# fill FREEAGENT_CLIENT_ID and FREEAGENT_CLIENT_SECRET
-npm install
-npm run auth          # browser OAuth → saves .oauth-tokens.json
-npm run company       # smoke test
-npm run accounts
+cp .env.example .env   # if needed — fill Client ID / Secret
+# Ensure FREEAGENT_REDIRECT_URI=http://127.0.0.1:3847/oauth/callback
+
+npm run docker:up
+open http://127.0.0.1:3847/auth    # OAuth once
+curl http://127.0.0.1:3847/health
+curl http://127.0.0.1:3847/api/company
+
+npm run docker:cli -- accounts
+npm run docker:logs
+npm run docker:down
 ```
 
-## CLI
+Tokens persist in `./data/.oauth-tokens.json` (gitignored). Drop receipt files in `./receipts/` (mounted read-only).
+
+## CLI (without Docker)
 
 ```bash
+npm install
+npm run auth          # uses PORT / redirect from .env (default 3847)
+npm run company
 npm run accounts
-npm run feeds
-npm run unexplained -- "https://api.sandbox.freeagent.com/v2/bank_accounts/1"
-npm run dev -- propose "https://api.sandbox.freeagent.com/v2/bank_accounts/1"
+npm run server        # long-running http://127.0.0.1:3847
 ```
-
-Writes that create explanations should be confirmed by a human — wrong explanations feed VAT and year-end.
 
 ## Agent tools
 
-See `src/tools.ts`:
-
-- `list_bank_accounts`
-- `list_bank_feeds`
-- `list_unexplained_transactions`
-- `list_open_invoices`
-- `propose_invoice_matches` (no write)
-- `explain_as_invoice_payment` (write)
-- `explain_with_category` (write)
-
-`agentToolDefinitions` is ready to plug into an LLM tool-calling runtime.
-
-## API references
-
-- [OAuth](https://dev.freeagent.com/docs/oauth)
-- [Bank transactions](https://dev.freeagent.com/docs/bank_transactions) (`view=unexplained`)
-- [Bank transaction explanations](https://dev.freeagent.com/docs/bank_transaction_explanations)
-- [Bank feeds](https://dev.freeagent.com/docs/bank_feeds) (read status only)
+See `src/tools.ts` — `agentToolDefinitions` for LLM tool-calling.
 
 ## Safety
 
-- Never commit `.env` or `.oauth-tokens.json`
+- Never commit `.env` or token files under `data/`
 - Auto-post only exact amount matches; queue ambiguous ones
 - Rate limits: 120 req/min, 3600/hour per user
+- Container binds **localhost only** (`127.0.0.1:3847`)

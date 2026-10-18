@@ -1,0 +1,14 @@
+node_modules
+dist
+data
+receipts
+.env
+.env.*
+!.env.example
+.oauth-tokens.json
+.git
+.DS_Store
+*.log
+coverage
+README.md
+LICENSE

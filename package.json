@@ -9,12 +9,17 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/cli.ts",
+    "server": "tsx src/server.ts",
     "auth": "tsx src/cli.ts auth",
     "company": "tsx src/cli.ts company",
     "accounts": "tsx src/cli.ts accounts",
     "unexplained": "tsx src/cli.ts unexplained",
     "feeds": "tsx src/cli.ts feeds",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "docker:up": "docker compose up -d --build",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "docker:cli": "docker compose exec freeagent-agent node dist/cli.js"
   },
   "engines": {
     "node": ">=20"
